@@ -14,7 +14,7 @@ class ClinicConfig(AppConfig):
         """Create default admin user if configured via environment variables."""
 
         def ensure_default_admin(sender, **kwargs):  # noqa: ANN001
-            username = os.environ.get("DEFAULT_ADMIN_USERNAME", "admin").strip() or "admin"
+            username = os.environ.get("DEFAULT_ADMIN_USERNAME", "Admin").strip() or "Admin"
             password = os.environ.get("DEFAULT_ADMIN_PASSWORD", "").strip()
             email = os.environ.get("DEFAULT_ADMIN_EMAIL", "admin@example.com").strip()
 

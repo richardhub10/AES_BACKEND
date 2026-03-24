@@ -37,7 +37,27 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() == "true"
 
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
+def _normalize_host(value: str) -> str:
+    value = (value or "").strip()
+    if not value:
+        return ""
+    # Render users sometimes paste full URLs; Django expects hostnames.
+    value = value.replace("https://", "").replace("http://", "")
+    # Strip path if present
+    value = value.split("/", 1)[0]
+    return value
+
+
+ALLOWED_HOSTS = [
+    _normalize_host(h)
+    for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+    if _normalize_host(h)
+]
+
+# Render sets this automatically to your service hostname (e.g., aes-back.onrender.com)
+render_host = _normalize_host(os.environ.get("RENDER_EXTERNAL_HOSTNAME", ""))
+if render_host and render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_host)
 
 if DEBUG and not ALLOWED_HOSTS:
     # Development default: allow local + LAN (e.g., phone hitting your machine IP)

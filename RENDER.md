@@ -14,8 +14,11 @@ Environment variables (Render dashboard):
 - `CORS_ALLOW_ALL_ORIGINS`: `true` for quick testing (tighten later)
 - `AES_MASTER_KEY_B64`: required (base64 32-byte key)
 
+Notes:
+- Render automatically provides `RENDER_EXTERNAL_HOSTNAME` (like `aes-back.onrender.com`). The backend auto-adds this to `ALLOWED_HOSTS` to prevent `Bad Request (400)` due to `DisallowedHost`.
+
 Default admin bootstrap (created automatically during `migrate`):
-- `DEFAULT_ADMIN_USERNAME`: default `admin`
+- `DEFAULT_ADMIN_USERNAME`: default `Admin`
 - `DEFAULT_ADMIN_PASSWORD`: required if you want the admin auto-created
 - `DEFAULT_ADMIN_EMAIL`: default `admin@example.com`
 
