@@ -5,7 +5,7 @@ Create a **Web Service** on Render from this repo.
 Suggested settings:
 - Environment: `Python 3`
 - Build command: `pip install -r requirements.txt && python manage.py migrate`
-- Start command: `gunicorn ua_clinic_backend.wsgi:application --chdir backend`
+- Start command: `gunicorn ua_clinic_backend.wsgi:application --chdir backend --bind 0.0.0.0:$PORT`
 
 Environment variables (Render dashboard):
 - `DJANGO_SECRET_KEY`: required
