@@ -14,5 +14,10 @@ Environment variables (Render dashboard):
 - `CORS_ALLOW_ALL_ORIGINS`: `true` for quick testing (tighten later)
 - `AES_MASTER_KEY_B64`: required (base64 32-byte key)
 
+Default admin bootstrap (created automatically during `migrate`):
+- `DEFAULT_ADMIN_USERNAME`: default `admin`
+- `DEFAULT_ADMIN_PASSWORD`: required if you want the admin auto-created
+- `DEFAULT_ADMIN_EMAIL`: default `admin@example.com`
+
 Important:
 - If you rotate `AES_MASTER_KEY_B64`, previously encrypted data cannot be decrypted.

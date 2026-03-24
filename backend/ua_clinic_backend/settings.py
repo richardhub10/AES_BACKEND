@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     # Local
-    'clinic',
+    'clinic.apps.ClinicConfig',
 ]
 
 MIDDLEWARE = [
