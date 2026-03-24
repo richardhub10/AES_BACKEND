@@ -21,6 +21,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 class AppointmentSerializer(serializers.ModelSerializer):
     patient_username = serializers.CharField(source="patient.username", read_only=True)
+    doctor_name = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = Appointment
@@ -41,6 +42,8 @@ class AppointmentSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context["request"]
         validated_data["patient"] = request.user
+        if not validated_data.get("doctor_name"):
+            validated_data["doctor_name"] = "General"
         return super().create(validated_data)
 
     def validate(self, attrs):
