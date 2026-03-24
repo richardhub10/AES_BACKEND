@@ -4,7 +4,7 @@ Create a **Web Service** on Render from this repo.
 
 Suggested settings:
 - Environment: `Python 3`
-- Build command: `pip install -r requirements.txt && python backend/manage.py migrate`
+- Build command: `pip install -r requirements.txt && python manage.py migrate`
 - Start command: `gunicorn ua_clinic_backend.wsgi:application --chdir backend`
 
 Environment variables (Render dashboard):
