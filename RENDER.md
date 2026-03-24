@@ -21,6 +21,7 @@ Default admin bootstrap (created automatically during `migrate`):
 - `DEFAULT_ADMIN_USERNAME`: default `Admin`
 - `DEFAULT_ADMIN_PASSWORD`: required if you want the admin auto-created
 - `DEFAULT_ADMIN_EMAIL`: default `admin@example.com`
+- `DEFAULT_ADMIN_FORCE_RESET`: set to `true` to force-reset the admin password on each deploy (optional)
 
 Important:
 - If you rotate `AES_MASTER_KEY_B64`, previously encrypted data cannot be decrypted.

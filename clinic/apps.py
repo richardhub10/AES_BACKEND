@@ -17,6 +17,7 @@ class ClinicConfig(AppConfig):
             username = os.environ.get("DEFAULT_ADMIN_USERNAME", "Admin").strip() or "Admin"
             password = os.environ.get("DEFAULT_ADMIN_PASSWORD", "").strip()
             email = os.environ.get("DEFAULT_ADMIN_EMAIL", "admin@example.com").strip()
+            force_reset = os.environ.get("DEFAULT_ADMIN_FORCE_RESET", "false").lower() == "true"
 
             # If password isn't provided, do nothing (safer than hardcoding a secret).
             if not password:
@@ -57,8 +58,17 @@ class ClinicConfig(AppConfig):
                 if hasattr(user, "email") and email and getattr(user, "email", "") != email:
                     user.email = email
                     changed = True
+
+                # Optionally force reset password (useful on Render when you want a known default).
+                if force_reset and password:
+                    user.set_password(password)
+                    changed = True
+
                 if changed:
                     user.save()
-                    print(f"[ua-clinic] Updated default admin privileges: {username}")
+                    msg = "Updated default admin"
+                    if force_reset:
+                        msg += " (password reset)"
+                    print(f"[ua-clinic] {msg}: {username}")
 
         post_migrate.connect(ensure_default_admin, sender=self)
