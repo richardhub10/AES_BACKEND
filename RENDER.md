@@ -16,8 +16,15 @@ Environment variables (Render dashboard):
 
 Persistent accounts (IMPORTANT):
 - If you use the default SQLite database, Render will wipe it on restarts/redeploys.
+
+Option A (recommended): Postgres
 - Create a **Render Postgres** database and attach it to this web service so Render provides `DATABASE_URL`.
 - With `DATABASE_URL` set, Django will use Postgres and user accounts will persist across restarts.
+
+Option B (no Postgres): Persistent Disk + SQLite
+- Create a **Persistent Disk** on the backend service and mount it at `/var/data`.
+- Add env var `SQLITE_PATH=/var/data/db.sqlite3`.
+- Redeploy. The SQLite file will be stored on the disk and will persist across restarts.
 
 Notes:
 - Render automatically provides `RENDER_EXTERNAL_HOSTNAME` (like `aes-back.onrender.com`). The backend auto-adds this to `ALLOWED_HOSTS` to prevent `Bad Request (400)` due to `DisallowedHost`.

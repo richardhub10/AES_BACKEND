@@ -140,10 +140,13 @@ if DATABASE_URL:
     }
 else:
     # Local/dev fallback
+    # NOTE: On Render without Postgres, you can attach a Persistent Disk and set
+    # SQLITE_PATH=/var/data/db.sqlite3 so the DB survives restarts.
+    sqlite_path = os.environ.get("SQLITE_PATH", "").strip()
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': sqlite_path or (BASE_DIR / 'db.sqlite3'),
         }
     }
 
