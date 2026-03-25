@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
 
+from .crypto import encrypt_str
 from .models import Appointment, UserProfile
 
 
@@ -70,6 +71,24 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["patient", "created_at", "updated_at"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        # By default, do NOT expose plaintext. Return AES-encrypted strings.
+        # Decrypt endpoint can pass context {"return_plaintext": True}.
+        if self.context.get("return_plaintext") is True:
+            return data
+
+        try:
+            data["reason"] = encrypt_str(data.get("reason") or "")
+            data["notes"] = encrypt_str(data.get("notes") or "")
+        except Exception:  # noqa: BLE001
+            # Fail closed: if encryption fails, don't leak plaintext.
+            data["reason"] = ""
+            data["notes"] = ""
+
+        return data
 
     def create(self, validated_data):
         request = self.context["request"]

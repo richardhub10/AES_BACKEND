@@ -1,4 +1,5 @@
 from rest_framework import permissions, viewsets
+from rest_framework.decorators import action
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
@@ -48,3 +49,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 		if user.is_staff:
 			return Appointment.objects.select_related("patient").all()
 		return Appointment.objects.select_related("patient").filter(patient=user)
+
+	@action(detail=True, methods=["GET"], url_path="decrypt")
+	def decrypt(self, request, pk=None):  # noqa: ANN001
+		appt = self.get_object()  # enforces IsOwnerOrStaff
+		serializer = self.get_serializer(appt, context={"request": request, "return_plaintext": True})
+		return Response(serializer.data)
