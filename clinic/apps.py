@@ -29,46 +29,46 @@ class ClinicConfig(AppConfig):
 
             User = get_user_model()
 
-            user, created = User.objects.get_or_create(
-                username=username,
-                defaults={
-                    "email": email,
-                    "is_staff": True,
-                    "is_superuser": True,
-                },
-            )
+            user = User.objects.filter(username__iexact=username).first()
+            created = False
+            if not user:
+                user = User(
+                    username=username,
+                    email=email,
+                    is_staff=True,
+                    is_superuser=True,
+                    is_active=True,
+                )
+                created = True
 
-            if created:
-                user.set_password(password)
+            # Ensure privileges are correct
+            changed = created
+            if not getattr(user, "is_active", True):
+                user.is_active = True
+                changed = True
+            if not user.is_staff:
                 user.is_staff = True
+                changed = True
+            if not user.is_superuser:
                 user.is_superuser = True
-                if hasattr(user, "email") and email:
-                    user.email = email
+                changed = True
+            if hasattr(user, "email") and email and getattr(user, "email", "") != email:
+                user.email = email
+                changed = True
+
+            # Set password when creating, forcing reset, or when user has no usable password.
+            if created or force_reset or not user.has_usable_password():
+                user.set_password(password)
+                changed = True
+
+            if changed:
                 user.save()
-                print(f"[ua-clinic] Created default admin user: {username}")
-            else:
-                # Ensure privileges are correct (but do NOT change password automatically)
-                changed = False
-                if not user.is_staff:
-                    user.is_staff = True
-                    changed = True
-                if not user.is_superuser:
-                    user.is_superuser = True
-                    changed = True
-                if hasattr(user, "email") and email and getattr(user, "email", "") != email:
-                    user.email = email
-                    changed = True
-
-                # Optionally force reset password (useful on Render when you want a known default).
-                if force_reset and password:
-                    user.set_password(password)
-                    changed = True
-
-                if changed:
-                    user.save()
+                if created:
+                    print(f"[ua-clinic] Created default admin user: {username}")
+                else:
                     msg = "Updated default admin"
-                    if force_reset:
-                        msg += " (password reset)"
+                    if force_reset or not user.has_usable_password():
+                        msg += " (password set/reset)"
                     print(f"[ua-clinic] {msg}: {username}")
 
         post_migrate.connect(ensure_default_admin, sender=self)

@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Appointment
@@ -45,6 +46,23 @@ class AppointmentSerializer(serializers.ModelSerializer):
         if not validated_data.get("doctor_name"):
             validated_data["doctor_name"] = "General"
         return super().create(validated_data)
+
+    def validate_scheduled_for(self, value):
+        """Disallow appointments on Saturday/Sunday (UTC)."""
+        if not value:
+            return value
+
+        dt = value
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, timezone=timezone.utc)
+
+        dt_utc = dt.astimezone(timezone.utc)
+        if dt_utc.weekday() in (5, 6):  # Sat/Sun
+            raise serializers.ValidationError(
+                "Appointments cannot be scheduled on Saturday or Sunday."
+            )
+
+        return value
 
     def validate(self, attrs):
         request = self.context.get("request")
