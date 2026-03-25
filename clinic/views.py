@@ -12,17 +12,23 @@ def register(request):
 	serializer = RegisterSerializer(data=request.data)
 	serializer.is_valid(raise_exception=True)
 	user = serializer.save()
-	return Response({"id": user.id, "username": user.username})
+	return Response({"id": user.id, "email": user.email, "username": user.username})
 
 
 @api_view(["GET"])
 def me(request):
 	user = request.user
+	profile = getattr(user, "profile", None)
 	return Response(
 		{
 			"id": user.id,
 			"username": user.username,
 			"email": user.email,
+			"first_name": user.first_name,
+			"last_name": user.last_name,
+			"birthday": getattr(profile, "birthday", None),
+			"school_id": getattr(profile, "school_id", ""),
+			"contact_number": getattr(profile, "contact_number", ""),
 			"is_staff": user.is_staff,
 		}
 	)

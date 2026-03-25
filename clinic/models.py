@@ -51,3 +51,20 @@ class Appointment(models.Model):
 
 	def __str__(self) -> str:
 		return f"Appointment({self.patient_id}, {self.doctor_name}, {self.scheduled_for})"
+
+
+class UserProfile(models.Model):
+	user = models.OneToOneField(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.CASCADE,
+		related_name="profile",
+	)
+	birthday = models.DateField(null=True, blank=True)
+	school_id = models.CharField(max_length=64, blank=True, default="")
+	contact_number = models.CharField(max_length=32, blank=True, default="")
+
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	def __str__(self) -> str:
+		return f"UserProfile({self.user_id})"
