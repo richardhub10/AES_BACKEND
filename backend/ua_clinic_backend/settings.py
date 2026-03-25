@@ -143,6 +143,16 @@ else:
     # NOTE: On Render without Postgres, you can attach a Persistent Disk and set
     # SQLITE_PATH=/var/data/db.sqlite3 so the DB survives restarts.
     sqlite_path = os.environ.get("SQLITE_PATH", "").strip()
+
+    # Convenience: if a Render Persistent Disk is mounted at /var/data and SQLITE_PATH
+    # isn't set, use a stable default path so accounts persist.
+    if not sqlite_path:
+        try:
+            if os.path.isdir("/var/data"):
+                sqlite_path = "/var/data/db.sqlite3"
+        except Exception:
+            sqlite_path = ""
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
