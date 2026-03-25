@@ -54,6 +54,10 @@ class RegisterSerializer(serializers.Serializer):
 
 class AppointmentSerializer(serializers.ModelSerializer):
     patient_username = serializers.CharField(source="patient.username", read_only=True)
+    patient_first_name = serializers.CharField(source="patient.first_name", read_only=True)
+    patient_last_name = serializers.CharField(source="patient.last_name", read_only=True)
+    patient_full_name = serializers.SerializerMethodField()
+    patient_age = serializers.SerializerMethodField()
     doctor_name = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
@@ -62,6 +66,10 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "id",
             "patient",
             "patient_username",
+            "patient_first_name",
+            "patient_last_name",
+            "patient_full_name",
+            "patient_age",
             "doctor_name",
             "scheduled_for",
             "reason",
@@ -71,6 +79,24 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["patient", "created_at", "updated_at"]
+
+    def get_patient_full_name(self, obj):  # noqa: ANN001
+        first = (getattr(obj.patient, "first_name", "") or "").strip()
+        last = (getattr(obj.patient, "last_name", "") or "").strip()
+        full = (f"{first} {last}").strip()
+        return full
+
+    def get_patient_age(self, obj):  # noqa: ANN001
+        profile = getattr(obj.patient, "profile", None)
+        birthday = getattr(profile, "birthday", None)
+        if not birthday:
+            return None
+
+        today = timezone.now().date()
+        age = today.year - birthday.year - (
+            (today.month, today.day) < (birthday.month, birthday.day)
+        )
+        return age if age >= 0 else None
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

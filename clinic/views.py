@@ -47,8 +47,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 	def get_queryset(self):
 		user = self.request.user
 		if user.is_staff:
-			return Appointment.objects.select_related("patient").all()
-		return Appointment.objects.select_related("patient").filter(patient=user)
+			return Appointment.objects.select_related("patient", "patient__profile").all()
+		return Appointment.objects.select_related("patient", "patient__profile").filter(patient=user)
 
 	@action(detail=True, methods=["GET"], url_path="decrypt")
 	def decrypt(self, request, pk=None):  # noqa: ANN001
