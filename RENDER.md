@@ -4,7 +4,7 @@ Create a **Web Service** on Render from this repo.
 
 Suggested settings:
 - Environment: `Python 3`
-- Build command: `pip install -r requirements.txt && python manage.py migrate`
+- Build command: `pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py ensure_default_admin`
 - Start command: `gunicorn ua_clinic_backend.wsgi:application --chdir backend --bind 0.0.0.0:$PORT`
 
 Environment variables (Render dashboard):
@@ -39,8 +39,11 @@ Admin login fix on Render:
 - Set `DEFAULT_ADMIN_USERNAME=Admin`
 - Set `DEFAULT_ADMIN_PASSWORD=Admin123`
 - Set `DEFAULT_ADMIN_FORCE_RESET=true`
-- Redeploy (so `python manage.py migrate` runs and the bootstrap runs)
+- Redeploy (so the build/start commands run and the admin bootstrap runs)
 - After you confirm you can log in, you can set `DEFAULT_ADMIN_FORCE_RESET=false`
+
+Notes:
+- Django usernames are case-sensitive when logging in. If your username is `Admin`, you must log in using exactly `Admin` (not `admin`).
 
 Important:
 - If you rotate `AES_MASTER_KEY_B64`, previously encrypted data cannot be decrypted.
