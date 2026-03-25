@@ -8,9 +8,23 @@ class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Allow logging in with either `email`+`password` or `username`+`password`."""
 
     email = serializers.EmailField(required=False)
+    username = serializers.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # TokenObtainPairSerializer normally requires USERNAME_FIELD; relax it.
+        if self.username_field in self.fields:
+            self.fields[self.username_field].required = False
+            self.fields[self.username_field].allow_blank = True
 
     def validate(self, attrs):
         email = (attrs.get("email") or "").strip()
+        username = (attrs.get(self.username_field) or "").strip()
+
+        if not email and not username:
+            raise serializers.ValidationError(
+                {"detail": "Email or username is required."}
+            )
 
         # If email is provided, translate it into the configured username field.
         if email and not attrs.get(self.username_field):
