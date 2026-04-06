@@ -6,6 +6,40 @@ from .crypto import encrypt_str
 from .models import Appointment, UserProfile
 
 
+class StaffUserSerializer(serializers.ModelSerializer):
+    birthday = serializers.DateField(source="profile.birthday", read_only=True)
+    school_id = serializers.CharField(source="profile.school_id", read_only=True)
+    contact_number = serializers.CharField(source="profile.contact_number", read_only=True)
+
+    class Meta:
+        model = get_user_model()
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "is_staff",
+            "is_active",
+            "date_joined",
+            "birthday",
+            "school_id",
+            "contact_number",
+        ]
+        read_only_fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "is_staff",
+            "date_joined",
+            "birthday",
+            "school_id",
+            "contact_number",
+        ]
+
+
 class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=6)
