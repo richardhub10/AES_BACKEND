@@ -24,6 +24,8 @@ class Command(BaseCommand):
         User = get_user_model()
 
         user = User.objects.filter(username__iexact=username).first()
+        if not user and email:
+            user = User.objects.filter(email__iexact=email).first()
         created = False
         if not user:
             user = User(
