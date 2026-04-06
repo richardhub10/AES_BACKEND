@@ -4,6 +4,9 @@ from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from .models import Appointment, UserProfile
 
+# Use a custom admin homepage to provide quick navigation.
+admin.site.index_template = "admin/custom_index.html"
+
 
 @admin.action(description="Deactivate selected user accounts")
 def deactivate_users(_modeladmin, _request, queryset):  # noqa: ANN001
