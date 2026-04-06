@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from datetime import timedelta
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -191,6 +192,33 @@ class AppointmentSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if not request:
             return attrs
+
+        # Staff hourly capacity enforcement when confirming.
+        # Max 5 confirmed appointments per hour (UTC).
+        HOURLY_CAPACITY = 5
+        instance = getattr(self, "instance", None)
+        resulting_status = attrs.get("status") if "status" in attrs else getattr(instance, "status", None)
+        resulting_scheduled_for = attrs.get("scheduled_for") if "scheduled_for" in attrs else getattr(instance, "scheduled_for", None)
+        if request.user.is_staff and resulting_status == Appointment.Status.CONFIRMED and resulting_scheduled_for:
+            dt = resulting_scheduled_for
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, timezone=timezone.utc)
+            dt_utc = dt.astimezone(timezone.utc)
+            start = dt_utc.replace(minute=0, second=0, microsecond=0)
+            end = start + timedelta(hours=1)
+            qs = Appointment.objects.filter(
+                status=Appointment.Status.CONFIRMED,
+                scheduled_for__gte=start,
+                scheduled_for__lt=end,
+            )
+            if instance is not None and getattr(instance, "pk", None):
+                qs = qs.exclude(pk=instance.pk)
+            if qs.count() >= HOURLY_CAPACITY:
+                raise serializers.ValidationError(
+                    {
+                        "status": "This time slot is full. Maximum 5 confirmed appointments per hour."
+                    }
+                )
 
         # Staff can accept/confirm/cancel, but must not create appointments.
         if request.method == "POST" and request.user.is_staff:
