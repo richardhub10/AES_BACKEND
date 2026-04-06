@@ -131,13 +131,23 @@ DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 
 if DATABASE_URL:
     # Render Postgres (or any hosted Postgres) for persistence across deploys.
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=not DEBUG,
-        )
-    }
+    default_db = dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=not DEBUG,
+    )
+
+    # Some platforms (including some Render environments) may lack IPv6 egress.
+    # Supabase DNS can return IPv6 first; psycopg2/libpq may then fail with
+    # "Network is unreachable". Setting DATABASE_HOSTADDR to an IPv4 address
+    # forces the TCP connection to use IPv4 while preserving the hostname for
+    # TLS/cert validation.
+    hostaddr = os.environ.get("DATABASE_HOSTADDR", "").strip()
+    if hostaddr:
+        default_db.setdefault("OPTIONS", {})
+        default_db["OPTIONS"]["hostaddr"] = hostaddr
+
+    DATABASES = {"default": default_db}
 else:
     # Local/dev fallback
     # NOTE: On Render without Postgres, you can attach a Persistent Disk and set

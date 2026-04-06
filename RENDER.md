@@ -21,6 +21,25 @@ Option A (recommended): Postgres
 - Create a **Render Postgres** database and attach it to this web service so Render provides `DATABASE_URL`.
 - With `DATABASE_URL` set, Django will use Postgres and user accounts will persist across restarts.
 
+Supabase Postgres (instead of Render Postgres)
+- Set `DATABASE_URL` to your Supabase connection string, for example:
+	- `postgresql://postgres:<password>@db.<project-ref>.supabase.co:5432/postgres?sslmode=require`
+
+If you see this error during `migrate` on Render:
+- `OperationalError: ... (IPv6 ...) port 5432 failed: Network is unreachable`
+
+Fix option 1 (recommended): use Supabase pooler
+- In Supabase dashboard: **Project Settings → Database → Connection string → Connection pooling**.
+- Use the **Transaction pooler** connection string as `DATABASE_URL` (it typically avoids IPv6-only resolution).
+
+Fix option 2: force IPv4 via `DATABASE_HOSTADDR`
+- Run locally:
+	- `nslookup db.<project-ref>.supabase.co`
+- Copy one IPv4 address from the output (an `Address:` that looks like `123.45.67.89`).
+- Add a Render env var:
+	- `DATABASE_HOSTADDR=123.45.67.89`
+- Redeploy. The backend will keep the hostname for TLS but connect using IPv4.
+
 Option B (no Postgres): Persistent Disk + SQLite
 - Create a **Persistent Disk** on the backend service and mount it at `/var/data`.
 - Add env var `SQLITE_PATH=/var/data/db.sqlite3`.

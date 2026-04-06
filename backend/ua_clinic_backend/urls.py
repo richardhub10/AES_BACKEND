@@ -15,13 +15,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path
 
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from clinic.auth import EmailOrUsernameTokenObtainPairView
 
+
+def healthz(_request):  # noqa: ANN001
+    return JsonResponse({"status": "ok"})
+
 urlpatterns = [
+    path('', healthz, name='root'),
+    path('healthz/', healthz, name='healthz'),
     path('admin/', admin.site.urls),
     path('api/', include('clinic.urls')),
     path('api/auth/token/', EmailOrUsernameTokenObtainPairView.as_view(), name='token_obtain_pair'),
