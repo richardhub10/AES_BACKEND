@@ -17,6 +17,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ua_clinic_backend.settings')
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
+	# Ensure repo-root apps (like `clinic/`) are importable when running via ASGI.
 	sys.path.insert(0, str(REPO_ROOT))
 
 application = get_asgi_application()

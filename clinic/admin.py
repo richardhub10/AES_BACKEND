@@ -1,3 +1,11 @@
+"""Django admin configuration.
+
+Used mainly for:
+- Viewing/updating appointments in an admin UI
+- Viewing accounts and their profiles
+- Enabling/disabling accounts via bulk actions (presentation/admin convenience)
+"""
+
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
@@ -28,6 +36,7 @@ class UserProfileInline(admin.StackedInline):
 User = get_user_model()
 
 try:
+	# Unregister the default Django User admin so we can register our customized version.
 	admin.site.unregister(User)
 except admin.sites.NotRegistered:
 	pass

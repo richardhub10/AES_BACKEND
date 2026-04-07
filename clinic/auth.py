@@ -1,3 +1,17 @@
+"""Custom JWT login logic for the backend.
+
+The mobile app sends `{ email, password }` when logging in.
+However, Django/JWT often expects `{ username, password }`.
+
+This serializer/view pair supports BOTH:
+- email + password
+- username + password
+
+Implementation idea:
+If an email is provided, we look up the associated user and populate the
+configured `USERNAME_FIELD` before delegating to SimpleJWT's validation.
+"""
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -18,6 +32,7 @@ class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
             self.fields[self.username_field].allow_blank = True
 
     def validate(self, attrs):
+        # Accept either email or username.
         email = (attrs.get("email") or "").strip()
         username = (attrs.get(self.username_field) or "").strip()
 
@@ -29,6 +44,7 @@ class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
         # If email is provided, translate it into the configured username field.
         if email and not attrs.get(self.username_field):
             User = get_user_model()
+            # Use a case-insensitive search so EMAIL@EXAMPLE.COM works.
             user = User.objects.filter(email__iexact=email).only(self.username_field).first()
             if user is not None:
                 attrs[self.username_field] = getattr(user, self.username_field)

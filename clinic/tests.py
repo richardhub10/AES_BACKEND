@@ -1,3 +1,10 @@
+"""Backend test suite.
+
+These tests support the presentation by proving:
+- AES encryption at rest: sensitive fields are not stored as plaintext in DB
+- Permissions rules: what patients can/can't do vs staff
+"""
+
 import base64
 import datetime
 
@@ -13,6 +20,7 @@ from .models import Appointment
 @override_settings(AES_MASTER_KEY_B64=base64.b64encode(b"0" * 32).decode("ascii"))
 class EncryptionAtRestTests(TestCase):
 	def test_encrypted_fields_are_not_plaintext_in_db(self):
+		# Create an appointment with sensitive fields.
 		user = User.objects.create_user(username="alice", password="pass1234")
 
 		appt = Appointment.objects.create(

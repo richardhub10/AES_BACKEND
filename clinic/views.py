@@ -1,3 +1,18 @@
+"""API views for the clinic app.
+
+This module exposes the endpoints consumed by the Expo frontend:
+- Registration (`/api/auth/register/`)
+- Current user (`/api/auth/me/`)
+- Appointments CRUD (`/api/appointments/...`)
+- Staff account management (`/api/staff/users/...`)
+
+Security note (AES):
+Appointments contain sensitive fields (reason/notes). Those fields are:
+- Encrypted at rest in the DB (EncryptedTextField)
+- Returned encrypted by default via the serializer
+- Returned plaintext ONLY via the `decrypt` action and only to owner/staff
+"""
+
 from django.contrib.auth import get_user_model
 
 from rest_framework import mixins, permissions, viewsets
@@ -12,6 +27,10 @@ from .serializers import AppointmentSerializer, RegisterSerializer, StaffUserSer
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def register(request):
+	"""Create a new user account.
+
+	The serializer also creates the associated `UserProfile`.
+	"""
 	serializer = RegisterSerializer(data=request.data)
 	serializer.is_valid(raise_exception=True)
 	user = serializer.save()
@@ -20,6 +39,7 @@ def register(request):
 
 @api_view(["GET"])
 def me(request):
+	"""Return the currently authenticated user's info (used to detect staff)."""
 	user = request.user
 	profile = getattr(user, "profile", None)
 	return Response(
@@ -38,6 +58,8 @@ def me(request):
 
 
 class IsOwnerOrStaff(permissions.BasePermission):
+	"""Object-level permission: appointment owner OR staff can access."""
+
 	def has_object_permission(self, request, view, obj):  # noqa: ANN001
 		return request.user and (request.user.is_staff or obj.patient_id == request.user.id)
 
@@ -47,6 +69,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 	permission_classes = [permissions.IsAuthenticated, IsOwnerOrStaff]
 
 	def get_queryset(self):
+		# Staff can see all appointments; patients can only see their own.
 		user = self.request.user
 		if user.is_staff:
 			return Appointment.objects.select_related("patient", "patient__profile").all()
@@ -54,12 +77,21 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
 	@action(detail=True, methods=["GET"], url_path="decrypt")
 	def decrypt(self, request, pk=None):  # noqa: ANN001
+		"""Return plaintext reason/notes for one appointment.
+
+		Why this exists:
+		- The normal list/detail endpoints return AES-encrypted strings for privacy.
+		- For UX (reading details / generating ticket), authorized users can request
+		  plaintext explicitly.
+		"""
 		appt = self.get_object()  # enforces IsOwnerOrStaff
 		serializer = self.get_serializer(appt, context={"request": request, "return_plaintext": True})
 		return Response(serializer.data)
 
 
 class IsStaffUser(permissions.BasePermission):
+	"""Permission: only authenticated staff accounts."""
+
 	def has_permission(self, request, view):  # noqa: ANN001
 		return bool(request.user and request.user.is_authenticated and request.user.is_staff)
 

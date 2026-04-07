@@ -1,3 +1,14 @@
+# Backend dependencies for the UA Clinic Appointment System
+#
+# Key packages (presentation notes):
+# - Django: core web framework
+# - djangorestframework: REST API layer
+# - simplejwt: JWT auth for the Expo frontend
+# - django-cors-headers: allows the frontend origin to call the API
+# - cryptography: AES-GCM primitives used by EncryptedTextField
+# - gunicorn: production WSGI server (Render)
+# - dj-database-url + psycopg2-binary: Postgres support via DATABASE_URL
+
 Django>=4.2,<5.0
 djangorestframework>=3.14
 djangorestframework-simplejwt>=5.3

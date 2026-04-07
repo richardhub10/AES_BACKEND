@@ -8,6 +8,12 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
+
+Project-specific notes (presentation-friendly):
+- Uses DRF + SimpleJWT for API authentication.
+- Uses CORS headers to allow the Expo frontend to call the backend.
+- Uses `AES_MASTER_KEY_B64` (base64) for AES-GCM encryption of sensitive fields.
+- Supports either Postgres via `DATABASE_URL` or a SQLite fallback.
 """
 
 import os

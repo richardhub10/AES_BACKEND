@@ -24,6 +24,7 @@ from clinic.auth import EmailOrUsernameTokenObtainPairView
 
 
 def healthz(_request):  # noqa: ANN001
+    # Simple health check endpoint (used by Render and for quick manual testing).
     return JsonResponse({"status": "ok"})
 
 urlpatterns = [

@@ -1,3 +1,17 @@
+"""DRF serializers for the clinic API.
+
+Serializers define:
+- Input validation rules (e.g., allowed appointment times, weekend restrictions)
+- Output shape (what fields are returned to the frontend)
+- Business rules enforced at the API boundary (e.g., staff hourly capacity)
+
+Security note (AES-at-rest):
+The `Appointment` model stores `reason` and `notes` encrypted in the database.
+For defense-in-depth, this API *also* returns encrypted strings for `reason` and
+`notes` by default. Plaintext is only returned via a dedicated decrypt endpoint
+and only to authorized users.
+"""
+
 from django.contrib.auth import get_user_model
 from datetime import timedelta
 from django.utils import timezone
@@ -8,6 +22,8 @@ from .models import Appointment, UserProfile
 
 
 class StaffUserSerializer(serializers.ModelSerializer):
+
+    # These fields are read from the related UserProfile via `source="profile.<field>"`.
     birthday = serializers.DateField(source="profile.birthday", read_only=True)
     school_id = serializers.CharField(source="profile.school_id", read_only=True)
     contact_number = serializers.CharField(source="profile.contact_number", read_only=True)
@@ -42,6 +58,11 @@ class StaffUserSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.Serializer):
+    """Validate and create a new user + profile.
+
+    We use the email address as the username for a simple login experience.
+    """
+
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=6)
     first_name = serializers.CharField(max_length=150)
@@ -51,6 +72,7 @@ class RegisterSerializer(serializers.Serializer):
     contact_number = serializers.CharField(max_length=32)
 
     def validate_email(self, value):
+        # Normalize to a consistent form to avoid duplicate-account edge cases.
         User = get_user_model()
         email_norm = value.strip().lower()
         if User.objects.filter(email__iexact=email_norm).exists():
@@ -88,6 +110,15 @@ class RegisterSerializer(serializers.Serializer):
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
+    """Serializer for Appointment CRUD.
+
+    Important behaviors:
+    - Adds patient-derived read-only fields (full name, age) for display.
+    - Encrypts `reason` and `notes` in API output by default.
+    - Enforces schedule constraints (weekdays only, hourly slots, UTC time).
+    - Enforces staff hourly capacity when confirming.
+    """
+
     patient_username = serializers.CharField(source="patient.username", read_only=True)
     patient_first_name = serializers.CharField(source="patient.first_name", read_only=True)
     patient_last_name = serializers.CharField(source="patient.last_name", read_only=True)
@@ -142,6 +173,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
             return data
 
         try:
+            # Even though the DB stores ciphertext already, we re-encrypt for transport
+            # so the frontend never accidentally displays plaintext unless the user
+            # explicitly calls the decrypt endpoint.
             data["reason"] = encrypt_str(data.get("reason") or "")
             data["notes"] = encrypt_str(data.get("notes") or "")
         except Exception:  # noqa: BLE001
@@ -159,7 +193,13 @@ class AppointmentSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     def validate_scheduled_for(self, value):
-        """Disallow appointments on Saturday/Sunday (UTC)."""
+        """Validate scheduling rules.
+
+        Rules (UTC-based):
+        - No weekend appointments
+        - Exactly on the hour (minutes/seconds must be 0)
+        - Allowed hours: 07:00 through 16:00 inclusive
+        """
         if not value:
             return value
 
@@ -195,6 +235,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
         # Staff hourly capacity enforcement when confirming.
         # Max 5 confirmed appointments per hour (UTC).
+        #
+        # This is enforced here because this is the narrow point where status
+        # changes to CONFIRMED.
         HOURLY_CAPACITY = 5
         instance = getattr(self, "instance", None)
         resulting_status = attrs.get("status") if "status" in attrs else getattr(instance, "status", None)

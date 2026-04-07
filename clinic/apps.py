@@ -1,3 +1,18 @@
+"""App configuration for the `clinic` Django app.
+
+This hooks into Django startup to optionally "bootstrap" a default admin user.
+
+Why:
+- On platforms like Render, you may want an initial admin for setup/testing.
+- The bootstrap is controlled by environment variables, so secrets are not
+    hard-coded in the repository.
+
+Environment variables used:
+- DEFAULT_ADMIN_USERNAME / DEFAULT_ADMIN_EMAIL / DEFAULT_ADMIN_PASSWORD
+- DEFAULT_ADMIN_FORCE_RESET
+- DEFAULT_ADMIN_BOOTSTRAP_ON_STARTUP
+"""
+
 import os
 
 from django.apps import AppConfig
@@ -15,6 +30,9 @@ class ClinicConfig(AppConfig):
         """Create default admin user if configured via environment variables."""
 
         def ensure_default_admin(sender, **kwargs):  # noqa: ANN001
+            # This function runs after migrations (`post_migrate`).
+            # It can also run once at startup (see below) to be more robust on
+            # some PaaS environments.
             try:
                 username = os.environ.get("DEFAULT_ADMIN_USERNAME", "Admin").strip() or "Admin"
                 password = os.environ.get("DEFAULT_ADMIN_PASSWORD", "").strip()

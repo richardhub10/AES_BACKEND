@@ -1,3 +1,14 @@
+"""Management command: ensure a default admin exists.
+
+This is useful for deployments (e.g., Render) where you want an initial admin
+user to exist without manually running `createsuperuser`.
+
+The command reads env vars (see help text) and then:
+- Creates the user if it doesn't exist
+- Ensures is_staff/is_superuser/is_active flags are correct
+- Optionally sets/resets the password
+"""
+
 import os
 
 from django.contrib.auth import get_user_model

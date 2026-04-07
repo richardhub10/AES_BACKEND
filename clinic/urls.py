@@ -1,3 +1,12 @@
+"""URL routes for the `clinic` Django app.
+
+Mounted under `/api/` by the project-level urls.
+
+We use DRF routers for ViewSets:
+- `/api/appointments/` (AppointmentViewSet)
+- `/api/staff/users/` (StaffUserViewSet)
+"""
+
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
