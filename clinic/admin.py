@@ -75,10 +75,30 @@ class UserProfileAdmin(admin.ModelAdmin):
 	list_select_related = ("user",)
 
 
+class AppointmentRequestOrderFilter(admin.SimpleListFilter):
+	title = "Request order"
+	parameter_name = "request_order"
+
+	def lookups(self, request, model_admin):  # noqa: ANN001
+		return (
+			("newest", "Newest request first"),
+			("oldest", "Oldest request first"),
+		)
+
+	def queryset(self, request, queryset):  # noqa: ANN001
+		value = self.value()
+		if value == "oldest":
+			return queryset.order_by("created_at")
+		if value == "newest":
+			return queryset.order_by("-created_at")
+		return queryset
+
+
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
 	list_display = ("id", "patient", "doctor_name", "scheduled_for", "status", "created_at")
-	list_filter = ("status", "scheduled_for")
+	list_filter = (AppointmentRequestOrderFilter, "status", "scheduled_for")
 	search_fields = ("doctor_name", "patient__username", "patient__email")
 	list_select_related = ("patient",)
 	date_hierarchy = "scheduled_for"
+	ordering = ("-created_at",)
